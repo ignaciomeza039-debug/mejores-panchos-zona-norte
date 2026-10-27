@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Los Mejores Panchos de Zona Norte (Bs As)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        mustard: {
+                            400: '#facc15',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                        },
+                        ketchup: {
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                        },
+                        darkbg: '#0f0f11',
+                        cardbg: '#18181b',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f0f11;
+            color: #f3f4f6;
+        }
+        /* Custom map styling */
+        .leaflet-container {
+            width: 100%;
+            height: 100%;
+            border-radius: 0.75rem;
+            z-index: 10;
+        }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background-color: #18181b !important;
+            color: #f3f4f6 !important;
+            border: 1px solid #3f3f46;
+        }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #18181b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #eab308;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-darkbg text-gray-100">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 bg-cardbg/95 backdrop-blur border-b border-zinc-800 px-4 py-3 shadow-lg">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-ketchup-600 to-mustard-500 flex items-center justify-center text-white font-black text-xl shadow-md transform -rotate-6">
+                    <i class="fa-solid fa-hotdog"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg sm:text-xl tracking-tight leading-none text-white">
+                        PANCHOS <span class="text-mustard-400">ZONA NORTE</span>
+                    </h1>
+                    <p class="text-xs text-zinc-400 font-medium">La guía definitiva del súper pancho bsas</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2">
+                <button onclick="openRoulette()" class="px-3 py-2 bg-gradient-to-r from-ketchup-600 to-mustard-500 hover:from-ketchup-700 hover:to-mustard-600 text-white font-bold text-xs sm:text-sm rounded-lg flex items-center gap-1.5 shadow-md hover:scale-105 transition">
+                    <i class="fa-solid fa-dice animate-spin-slow"></i>
+                    <span class="hidden sm:inline">Ruleta</span> Panchera
+                </button>
+                <button onclick="openAddModal()" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-mustard-400 border border-mustard-500/30 font-semibold text-xs sm:text-sm rounded-lg flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-plus-circle"></i>
+                    <span class="hidden md:inline">Sumar</span> Puesto
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+        <!-- Sidebar / Filter Bar -->
+        <aside class="lg:col-span-4 xl:col-span-3 flex flex-col gap-4">
+            
+            <!-- Filters Card -->
+            <div class="bg-cardbg border border-zinc-800 rounded-xl p-4 shadow-md">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="font-bold text-zinc-200 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-filter text-mustard-400"></i> Filtros
+                    </h2>
+                    <button onclick="resetFilters()" class="text-xs text-zinc-400 hover:text-mustard-400 transition">
+                        Limpiar
+                    </button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative mb-3">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-zinc-500 text-xs"></i>
+                    <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Buscar puesto, calle..." class="w-full pl-8 pr-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-mustard-500">
+                </div>
+
+                <!-- Partido / Municipality Dropdown -->
+                <div class="mb-3">
+                    <label class="block text-xs text-zinc-400 mb-1 font-medium">Partido / Zona</label>
+                    <select id="partidoFilter" onchange="applyFilters()" class="w-full bg-zinc-900 border border-zinc-700 text-zinc-200 text-xs rounded-lg p-2 focus:outline-none focus:border-mustard-500">
+                        <option value="ALL">Todos los partidos</option>
+                        <option value="Tigre">Tigre</option>
+                        <option value="San Fernando">San Fernando</option>
+                        <option value="San Isidro">San Isidro</option>
+                        <option value="Vicente López">Vicente López</option>
+                        <option value="San Martín">San Martín</option>
+                        <option value="Malvinas Argentinas">Malvinas Argentinas</option>
+                        <option value="Escobar">Escobar</option>
+                    </select>
+                </div>
+
+                <!-- Type Tags / Quick Toggles -->
+                <div class="mb-3">
+                    <label class="block text-xs text-zinc-400 mb-1.5 font-medium">Categorías / Atributos</label>
+                    <div class="flex flex-wrap gap-1.5" id="tagFilters">
+                        <!-- Filter Badges generated JS -->
+                    </div>
+                </div>
+
+                <!-- Sort option -->
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-1 font-medium">Ordenar Por</label>
+                    <select id="sortSelect" onchange="applyFilters()" class="w-full bg-zinc-900 border border-zinc-700 text-zinc-200 text-xs rounded-lg p-2 focus:outline-none focus:border-mustard-500">
+                        <option value="rating-desc">Mejor Valorados (Estrellas)</option>
+                        <option value="price-asc">Precio: Más Económico</option>
+                        <option value="price-desc">Precio: Súper XL Completo</option>
+                        <option value="name-asc">Nombre (A-Z)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- View Switcher Tabs (Mobile First) -->
+            <div class="flex bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+                <button id="btnListTab" onclick="switchView('list')" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-mustard-500 text-zinc-950 shadow flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-list-ul"></i> Lista (<span id="countSpots">0</span>)
+                </button>
+                <button id="btnMapTab" onclick="switchView('map')" class="flex-1 py-2 text-xs font-semibold rounded-lg text-zinc-400 hover:text-white flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-map-location-dot"></i> Mapa Interactivo
+                </button>
+            </div>
+
+            <!-- Stats/Info Widget -->
+            <div class="bg-cardbg border border-zinc-800 rounded-xl p-3 flex items-center justify-between text-xs text-zinc-400">
+                <span><i class="fa-solid fa-fire text-ketchup-500 mr-1"></i> Puestos verificados: <b id="totalSpotsCount" class="text-white">0</b></span>
+                <span class="text-zinc-500">Actualizado 2026</span>
+            </div>
+        </aside>
+
+        <!-- Right Content Section (List & Map) -->
+        <section class="lg:col-span-8 xl:col-span-9 flex flex-col gap-4">
+            
+            <!-- Map Container (Hidden on mobile if list active, controlled by tab or desktop dual) -->
+            <div id="mapViewContainer" class="hidden lg:block w-full h-[320px] lg:h-[380px] bg-cardbg rounded-xl border border-zinc-800 overflow-hidden relative shadow-md">
+                <div id="map"></div>
+            </div>
+
+            <!-- Spots Grid/List Container -->
+            <div id="listViewContainer" class="flex-1">
+                <div id="spotsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+                    <!-- Spot Cards populated via JS -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="emptyState" class="hidden flex-col items-center justify-center py-12 text-center bg-cardbg border border-zinc-800 rounded-xl p-6">
+                    <div class="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center text-mustard-400 text-2xl mb-3">
+                        <i class="fa-solid fa-hotdog"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-1">¡Sin panchoperías encontradas!</h3>
+                    <p class="text-xs text-zinc-400 max-w-sm mb-4">No se encontraron locales que coincidan con los filtros seleccionados.</p>
+                    <button onclick="resetFilters()" class="px-4 py-2 bg-mustard-500 text-zinc-950 font-bold text-xs rounded-lg hover:bg-mustard-400 transition">
+                        Restablecer Filtros
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal: Detail View -->
+    <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-cardbg border border-zinc-700 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl transform transition-all my-8">
+            <div class="relative h-44 bg-zinc-800">
+                <img id="modalImage" src="" alt="Pancho" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-cardbg via-transparent to-black/40"></div>
+                
+                <button onclick="closeDetailModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <div class="absolute bottom-3 left-4 right-4 flex justify-between items-end">
+                    <div>
+                        <span id="modalPartido" class="px-2 py-0.5 bg-mustard-500/90 text-zinc-950 font-bold text-[10px] rounded uppercase tracking-wider"></span>
+                        <h2 id="modalName" class="text-xl font-black text-white leading-tight mt-1"></h2>
+                    </div>
+                    <div class="flex items-center gap-1 bg-zinc-900/90 px-2 py-1 rounded-lg border border-zinc-700">
+                        <i class="fa-solid fa-star text-mustard-400 text-xs"></i>
+                        <span id="modalRating" class="text-xs font-bold text-white"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-5 flex flex-col gap-4">
+                <!-- Location & Price -->
+                <div class="flex items-start justify-between border-b border-zinc-800 pb-3">
+                    <div class="flex items-start gap-2 text-xs text-zinc-300">
+                        <i class="fa-solid fa-location-dot text-ketchup-500 mt-0.5"></i>
+                        <div>
+                            <p id="modalAddress" class="font-semibold text-white"></p>
+                            <p id="modalZone" class="text-zinc-400"></p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] text-zinc-400 block">Súper Pancho Estándar</span>
+                        <span id="modalPrice" class="text-base font-black text-mustard-400"></span>
+                    </div>
+                </div>
+
+                <!-- Features Badges -->
+                <div>
+                    <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Características</h4>
+                    <div id="modalBadges" class="flex flex-wrap gap-1.5"></div>
+                </div>
+
+                <!-- Sauces / Toppings -->
+                <div>
+                    <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Aderezos & Salsas Estrella</h4>
+                    <div id="modalSauces" class="grid grid-cols-2 gap-2 text-xs"></div>
+                </div>
+
+                <!-- Description / Review -->
+                <div class="bg-zinc-900/80 p-3 rounded-xl border border-zinc-800 text-xs text-zinc-300">
+                    <p id="modalDescription" class="italic"></p>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-2 pt-2">
+                    <a id="modalMapLink" href="#" target="_blank" class="flex-1 py-2.5 bg-gradient-to-r from-ketchup-600 to-ketchup-700 hover:from-ketchup-500 hover:to-ketchup-600 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-md transition">
+                        <i class="fa-solid fa-diamond-turn-right"></i> Cómo Llegar (Google Maps)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Roulette / Pancho Match -->
+    <div id="rouletteModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-cardbg border border-zinc-700 rounded-2xl max-w-sm w-full p-5 text-center shadow-2xl relative">
+            <button onclick="closeRouletteModal()" class="absolute top-3 right-3 text-zinc-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="w-16 h-16 bg-mustard-500/10 text-mustard-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-mustard-500/30 text-2xl">
+                <i class="fa-solid fa-dice"></i>
+            </div>
+
+            <h2 class="text-lg font-black text-white mb-1">Pancho Match / Bajón Night</h2>
+            <p class="text-xs text-zinc-400 mb-4">¿Indeciso? Dejá que la ruleta elija tu súper pancho perfecto en Zona Norte.</p>
+
+            <div id="rouletteBox" class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 min-h-[120px] flex flex-col justify-center items-center mb-5">
+                <span class="text-zinc-500 text-xs italic">Presioná el botón para girar...</span>
+            </div>
+
+            <button onclick="spinRoulette()" id="spinBtn" class="w-full py-3 bg-gradient-to-r from-ketchup-600 to-mustard-500 hover:from-ketchup-500 hover:to-mustard-400 text-white font-black text-sm rounded-xl shadow-lg transition transform active:scale-95">
+                ¡SORPRENDEME AHORA!
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: Add Custom Spot -->
+    <div id="addModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-cardbg border border-zinc-700 rounded-2xl max-w-md w-full p-5 shadow-2xl my-8">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-zinc-800">
+                <h2 class="text-base font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-mustard-400"></i> Sumá tu Pancho Favorito
+                </h2>
+                <button onclick="closeAddModal()" class="text-zinc-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="addSpotForm" onsubmit="saveCustomSpot(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Nombre del Puesto / Local *</label>
+                    <input type="text" id="addName" required placeholder="Ej. Panchería El Tano / Carrito Estación" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-white focus:border-mustard-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-300 mb-1">Partido / Zona *</label>
+                        <select id="addPartido" required class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-white focus:border-mustard-500 focus:outline-none">
+                            <option value="Tigre">Tigre</option>
+                            <option value="San Fernando">San Fernando</option>
+                            <option value="San Isidro">San Isidro</option>
+                            <option value="Vicente López">Vicente López</option>
+                            <option value="San Martín">San Martín</option>
+                            <option value="Malvinas Argentinas">Malvinas Argentinas</option>
+                            <option value="Escobar">Escobar</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-300 mb-1">Precio Aprox ($) *</label>
+                        <input type="number" id="addPrice" required placeholder="3500" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-white focus:border-mustard-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Ubicación / Referencia Exacta *</label>
+                    <input type="text" id="addAddress" required placeholder="Ej. Av. Cavia y Italia, Estación Tigre" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-white focus:border-mustard-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Aderezos Especiales (separados por coma)</label>
+                    <input type="text" id="addSauces" placeholder="Ej. Lluvia de papas XL, Salsa de Palta, Cheddar casero" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-white focus:border-mustard-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-300 mb-1">Puntuación (1-5 estrellas)</label>
+                        <input type="number" id="addRating" min="1" max="5" step="0.1" value="4.5" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-white focus:border-mustard-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-300 mb-1">¿Es 24hs?</label>
+                        <select id="addIs24" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-white focus:border-mustard-500 focus:outline-none">
+                            <option value="false">No</option>
+                            <option value="true">Sí (Abierto 24hs)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Reseña o comentario</label>
+                    <textarea id="addDescription" rows="2" placeholder="Contanos por qué es de los mejores super panchos..." class="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-white focus:border-mustard-500 focus:outline-none"></textarea>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-mustard-500 hover:bg-mustard-400 text-zinc-950 font-black text-xs rounded-xl shadow transition mt-2">
+                    ¡PUBLICAR PUESTO EN MI LISTA!
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 z-50 bg-zinc-900 border border-mustard-500 text-white px-4 py-3 rounded-xl shadow-2xl hidden flex items-center gap-2 text-xs font-medium">
+        <i class="fa-solid fa-circle-check text-mustard-400"></i>
+        <span id="toastMsg"></span>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Initial Seed Data: Iconic Super Pancho Spots in Zona Norte
+        const INITIAL_SPOTS = [
+            {
+                id: 'spot-1',
+                name: 'El Rey del Pancho',
+                partido: 'San Fernando',
+                address: 'Av. Presidente Perón 1102 (Esq. Ayacucho)',
+                zone: 'San Fernando Centro',
+                lat: -34.4442,
+                lng: -58.5578,
+                price: 3200,
+                rating: 4.8,
+                is24hs: true,
+                type: 'Local Clásico',
+                tags: ['24hs', 'Lluvia XL', 'Local Clásico'],
+                sauces: ['Lluvia de Papas Crujiente', 'Cheddar Fundido', 'Mayonesa de Ajo', 'Salsa Criolla', 'Salsa Golf Casera'],
+                image: 'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?auto=format&fit=crop&w=600&q=80',
+                description: 'Un verdadero clásico histórico de San Fernando. Salchicha gigantesca, pan super suave vaporizado y la barra de aderezos más completa del partido.'
+            },
+            {
+                id: 'spot-2',
+                name: 'Pancho Bajón Rotonda',
+                partido: 'Tigre',
+                address: 'Av. Cavia & Av. de las Naciones',
+                zone: 'Estación Tigre / Rotonda',
+                lat: -34.4251,
+                lng: -58.5796,
+                price: 2900,
+                rating: 4.6,
+                is24hs: true,
+                type: 'Carrito Callejero',
+                tags: ['24hs', 'Puesto Callejero', 'Económico'],
+                sauces: ['Papas Paff Caseras', 'Pickles Agridulces', 'Mostaza Miel', 'Ketchup de Maracuyá'],
+                image: 'https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?auto=format&fit=crop&w=600&q=80',
+                description: 'El clásico de salida de los boliches e isla de Tigre. Famoso por su velocidad de atención y los aderezos agridulces artesanales.'
+            },
+            {
+                id: 'spot-3',
+                name: 'El Puesto de Márquez',
+                partido: 'San Isidro',
+                address: 'Av. Bernabé Márquez & Av. Centenario',
+                zone: 'Cerca del Hipódromo, San Isidro',
+                lat: -34.4712,
+                lng: -58.5284,
+                price: 3500,
+                rating: 4.7,
+                is24hs: false,
+                type: 'Carrito Callejero',
+                tags: ['Puesto Callejero', 'Lluvia XL'],
+                sauces: ['Lluvia Extra de Papas', 'Ají Picante Casero', 'Chimichurri Panchero', 'Alioli'],
+                image: 'https://images.unsplash.com/photo-1541214113241-21578d2d9b62?auto=format&fit=crop&w=600&q=80',
+                description: 'Un punto estratégico infaltable en San Isidro. Servido en pan fresco calentado con vapor y aderezos abundantes sin limite.'
+            },
+            {
+                id: 'spot-4',
+                name: 'Panchería Maipú 24',
+                partido: 'Vicente López',
+                address: 'Av. Maipú 1840',
+                zone: 'Vicente López / Olivos',
+                lat: -34.5265,
+                lng: -58.4791,
+                price: 3800,
+                rating: 4.9,
+                is24hs: true,
+                type: 'Local Clásico',
+                tags: ['24hs', 'Local Clásico', 'Aderezos Especiales'],
+                sauces: ['Salsa Barbacoa Humo', 'Guacamole Panchero', 'Queso Azul Derretido', 'Lluvia de Bacon'],
+                image: 'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?auto=format&fit=crop&w=600&q=80',
+                description: 'Pancho Gourmet a precio popular en pleno corredor Maipú. Imperdibles los toppings premium como bacon picado y salsa cheddar caliente.'
+            },
+            {
+                id: 'spot-5',
+                name: 'Super Pancho Plaza San Martín',
+                partido: 'San Martín',
+                address: 'Calle 85 (Balcarce) & Peatonal Belgrano',
+                zone: 'Plaza Central San Martín',
+                lat: -34.5775,
+                lng: -58.5369,
+                price: 2700,
+                rating: 4.5,
+                is24hs: false,
+                type: 'Carrito Callejero',
+                tags: ['Económico', 'Puesto Callejero'],
+                sauces: ['Lluvia Tradicional', 'Salsa Tártara', 'Picante Fuego', 'Mayonesa casera'],
+                image: 'https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?auto=format&fit=crop&w=600&q=80',
+                description: 'Tradición pura en el corazón de San Martín. Precios imbatibles con súper salchicha alemana de gran extensión.'
+            },
+            {
+                id: 'spot-6',
+                name: 'Panchería Estación Polvorines',
+                partido: 'Malvinas Argentinas',
+                address: 'Av. Presidente Perón 2550',
+                zone: 'Estación Los Polvorines',
+                lat: -34.5021,
+                lng: -58.6983,
+                price: 2800,
+                rating: 4.6,
+                is24hs: true,
+                type: 'Local Clásico',
+                tags: ['24hs', 'Económico', 'Lluvia XL'],
+                sauces: ['Cheddar derretido extra', 'Provencal Panchero', 'Salsa Criolla', 'Ketchup Ahumado'],
+                image: 'https://images.unsplash.com/photo-1541214113241-21578d2d9b62?auto=format&fit=crop&w=600&q=80',
+                description: 'Famoso por las filas a la salida del tren. Ponen dos capas de lluvia de papas (abajo y arriba de la salchicha).'
+            },
+            {
+                id: 'spot-7',
+                name: 'Pancho Costanera San Fernando',
+                partido: 'San Fernando',
+                address: 'Del Arca y el Río de la Plata',
+                zone: 'Costanera Municipal',
+                lat: -34.4361,
+                lng: -58.5398,
+                price: 3300,
+                rating: 4.7,
+                is24hs: false,
+                type: 'Carrito Callejero',
+                tags: ['Puesto Callejero', 'Vista al Río'],
+                sauces: ['Salsa Verde de Hierbas', 'Mayonesa con Ajo', 'Lluvia Crocante', 'Salsa de Mostaza'],
+                image: 'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?auto=format&fit=crop&w=600&q=80',
+                description: 'Ideal para comer mirando los barcos. Salchichas crujientes y aderezos bien frescos para las tardes de sol.'
+            }
+        ];
+
+        // App State
+        let spots = [];
+        let map = null;
+        let mapMarkers = [];
+        let activeTagFilters = new Set();
+        let currentSelectedSpot = null;
+
+        // Categories available for filtering
+        const TAG_OPTIONS = ['24hs', 'Puesto Callejero', 'Local Clásico', 'Lluvia XL', 'Económico'];
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSpots();
+            renderTagFilters();
+            initMap();
+            applyFilters();
+        });
+
+        // Load Spots from LocalStorage or Default
+        function loadSpots() {
+            const stored = localStorage.getItem('panchos_zonanorte_data');
+            if (stored) {
+                try {
+                    spots = JSON.parse(stored);
+                } catch(e) {
+                    spots = [...INITIAL_SPOTS];
+                }
+            } else {
+                spots = [...INITIAL_SPOTS];
+                localStorage.setItem('panchos_zonanorte_data', JSON.stringify(spots));
+            }
+        }
+
+        // Render category filters
+        function renderTagFilters() {
+            const container = document.getElementById('tagFilters');
+            container.innerHTML = TAG_OPTIONS.map(tag => `
+                <button onclick="toggleTagFilter('${tag}')" id="tag-${tag.replace(/\s+/g, '')}" class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-900 border border-zinc-700 text-zinc-300 hover:border-mustard-500 transition">
+                    ${tag}
+                </button>
+            `).join('');
+        }
+
+        function toggleTagFilter(tag) {
+            const btnId = `tag-${tag.replace(/\s+/g, '')}`;
+            const btn = document.getElementById(btnId);
+            if (activeTagFilters.has(tag)) {
+                activeTagFilters.delete(tag);
+                btn.classList.remove('bg-mustard-500', 'text-zinc-950', 'border-mustard-500');
+                btn.classList.add('bg-zinc-900', 'text-zinc-300');
+            } else {
+                activeTagFilters.add(tag);
+                btn.classList.add('bg-mustard-500', 'text-zinc-950', 'border-mustard-500');
+                btn.classList.remove('bg-zinc-900', 'text-zinc-300');
+            }
+            applyFilters();
+        }
+
+        // Initialize Leaflet Map
+        function initMap() {
+            // Default position focused on Zona Norte (San Isidro/Tigre area)
+            map = L.map('map').setView([-34.4600, -58.5500], 11);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        // Update markers on map
+        function updateMapMarkers(filteredSpots) {
+            if (!map) return;
+
+            // Clear old markers
+            mapMarkers.forEach(m => map.removeLayer(m));
+            mapMarkers = [];
+
+            if (filteredSpots.length === 0) return;
+
+            const bounds = [];
+
+            filteredSpots.forEach(spot => {
+                const customIcon = L.divIcon({
+                    className: 'custom-map-icon',
+                    html: `<div style="background:#eab308; color:#0f0f11; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #ffffff; font-size:14px; box-shadow:0 4px 6px rgba(0,0,0,0.4);"><i class="fa-solid fa-hotdog"></i></div>`,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                });
+
+                const marker = L.marker([spot.lat, spot.lng], { icon: customIcon }).addTo(map);
+                
+                marker.bindPopup(`
+                    <div style="font-family:'Inter',sans-serif; text-align:left;">
+                        <span style="font-size:9px; background:#eab308; color:#000; padding:1px 4px; border-radius:3px; font-weight:bold;">${spot.partido}</span>
+                        <h4 style="font-weight:bold; font-size:14px; margin:4px 0 2px 0;">${spot.name}</h4>
+                        <p style="font-size:11px; color:#a1a1aa; margin:0 0 6px 0;">${spot.address}</p>
+                        <p style="font-size:12px; font-weight:bold; color:#eab308; margin:0 0 6px 0;">$${spot.price.toLocaleString('es-AR')}</p>
+                        <button onclick="openDetailModal('${spot.id}')" style="background:#dc2626; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:bold; cursor:pointer; width:100%;">
+                            Ver Detalle Completo
+                        </button>
+                    </div>
+                `);
+
+                mapMarkers.push(marker);
+                bounds.push([spot.lat, spot.lng]);
+            });
+
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
+            }
+        }
+
+        // Filter and Render Logic
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const partido = document.getElementById('partidoFilter').value;
+            const sortBy = document.getElementById('sortSelect').value;
+
+            let filtered = spots.filter(spot => {
+                // Search query match
+                const matchQuery = !query || 
+                    spot.name.toLowerCase().includes(query) || 
+                    spot.address.toLowerCase().includes(query) ||
+                    spot.zone.toLowerCase().includes(query) ||
+                    spot.sauces.some(s => s.toLowerCase().includes(query));
+
+                // Partido match
+                const matchPartido = partido === 'ALL' || spot.partido === partido;
+
+                // Tag filters match
+                const matchTags = activeTagFilters.size === 0 || 
+                    Array.from(activeTagFilters).every(tag => {
+                        if (tag === '24hs') return spot.is24hs;
+                        if (tag === 'Económico') return spot.price <= 3000;
+                        return spot.tags.includes(tag) || spot.type === tag;
+                    });
+
+                return matchQuery && matchPartido && matchTags;
+            });
+
+            // Sorting
+            filtered.sort((a, b) => {
+                if (sortBy === 'rating-desc') return b.rating - a.rating;
+                if (sortBy === 'price-asc') return a.price - b.price;
+                if (sortBy === 'price-desc') return b.price - a.price;
+                if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+                return 0;
+            });
+
+            renderGrid(filtered);
+            updateMapMarkers(filtered);
+
+            document.getElementById('countSpots').innerText = filtered.length;
+            document.getElementById('totalSpotsCount').innerText = spots.length;
+        }
+
+        // Render List Grid
+        function renderGrid(data) {
+            const container = document.getElementById('spotsGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            if (data.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+
+            container.innerHTML = data.map(spot => `
+                <div class="bg-cardbg border border-zinc-800 hover:border-mustard-500/50 rounded-xl overflow-hidden shadow-md transition duration-200 flex flex-col group">
+                    <!-- Image header -->
+                    <div class="relative h-36 bg-zinc-900 overflow-hidden">
+                        <img src="${spot.image}" alt="${spot.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <div class="absolute top-2 left-2 flex gap-1">
+                            <span class="bg-mustard-500 text-zinc-950 font-black text-[10px] px-2 py-0.5 rounded shadow">
+                                ${spot.partido}
+                            </span>
+                            ${spot.is24hs ? `<span class="bg-ketchup-600 text-white font-bold text-[10px] px-2 py-0.5 rounded shadow">24 HS</span>` : ''}
+                        </div>
+                        <div class="absolute bottom-2 right-2 bg-zinc-950/80 backdrop-blur text-mustard-400 font-extrabold text-xs px-2 py-1 rounded border border-zinc-700 flex items-center gap-1">
+                            <i class="fa-solid fa-star text-[10px]"></i> ${spot.rating.toFixed(1)}
+                        </div>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="p-3.5 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-white text-sm line-clamp-1 group-hover:text-mustard-400 transition">${spot.name}</h3>
+                            <p class="text-zinc-400 text-xs mt-0.5 flex items-center gap-1 line-clamp-1">
+                                <i class="fa-solid fa-location-dot text-ketchup-500 text-[10px]"></i> ${spot.address}
+                            </p>
+                            
+                            <!-- Sauces previews -->
+                            <div class="mt-2.5 flex flex-wrap gap-1">
+                                ${spot.sauces.slice(0, 3).map(s => `
+                                    <span class="bg-zinc-900 text-zinc-400 border border-zinc-800 text-[9px] px-1.5 py-0.5 rounded">
+                                        ${s}
+                                    </span>
+                                `).join('')}
+                                ${spot.sauces.length > 3 ? `<span class="text-zinc-500 text-[9px]">+${spot.sauces.length - 3} más</span>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="mt-4 pt-2.5 border-t border-zinc-800/80 flex items-center justify-between">
+                            <div>
+                                <span class="text-[9px] text-zinc-500 block leading-none">Precio pancho</span>
+                                <span class="text-sm font-black text-mustard-400">$${spot.price.toLocaleString('es-AR')}</span>
+                            </div>
+                            <button onclick="openDetailModal('${spot.id}')" class="px-3 py-1.5 bg-zinc-800 hover:bg-mustard-500 hover:text-zinc-950 text-white font-bold text-xs rounded-lg transition border border-zinc-700">
+                                Ver Ficha
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // View Tabs Switcher (Mobile/Desktop)
+        function switchView(view) {
+            const mapCont = document.getElementById('mapViewContainer');
+            const btnList = document.getElementById('btnListTab');
+            const btnMap = document.getElementById('btnMapTab');
+
+            if (view === 'map') {
+                mapCont.classList.remove('hidden');
+                btnMap.classList.add('bg-mustard-500', 'text-zinc-950');
+                btnMap.classList.remove('text-zinc-400');
+                btnList.classList.remove('bg-mustard-500', 'text-zinc-950');
+                btnList.classList.add('text-zinc-400');
+                setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+            } else {
+                mapCont.classList.add('hidden', 'lg:block');
+                btnList.classList.add('bg-mustard-500', 'text-zinc-950');
+                btnList.classList.remove('text-zinc-400');
+                btnMap.classList.remove('bg-mustard-500', 'text-zinc-950');
+                btnMap.classList.add('text-zinc-400');
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('partidoFilter').value = 'ALL';
+            document.getElementById('sortSelect').value = 'rating-desc';
+            activeTagFilters.clear();
+            renderTagFilters();
+            applyFilters();
+        }
+
+        // Detail Modal
+        function openDetailModal(id) {
+            const spot = spots.find(s => s.id === id);
+            if (!spot) return;
+
+            currentSelectedSpot = spot;
+
+            document.getElementById('modalImage').src = spot.image;
+            document.getElementById('modalName').innerText = spot.name;
+            document.getElementById('modalPartido').innerText = spot.partido;
+            document.getElementById('modalRating').innerText = spot.rating.toFixed(1);
+            document.getElementById('modalAddress').innerText = spot.address;
+            document.getElementById('modalZone').innerText = spot.zone || spot.partido;
+            document.getElementById('modalPrice').innerText = `$${spot.price.toLocaleString('es-AR')}`;
+            document.getElementById('modalDescription').innerText = `"${spot.description || 'Excelente puesto emblemático de Zona Norte.'}"`;
+
+            // Google Maps Link
+            const query = encodeURIComponent(`${spot.name} ${spot.address} ${spot.partido}`);
+            document.getElementById('modalMapLink').href = `https://www.google.com/maps/search/?api=1&query=${query}`;
+
+            // Badges
+            const badgesContainer = document.getElementById('modalBadges');
+            let badgesHTML = `<span class="bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded text-[10px] font-semibold">${spot.type || 'Puesto'}</span>`;
+            if (spot.is24hs) {
+                badgesHTML += `<span class="bg-ketchup-600/20 text-ketchup-400 border border-ketchup-500/30 px-2 py-0.5 rounded text-[10px] font-bold">Abierto 24 Hs</span>`;
+            }
+            if (spot.tags) {
+                spot.tags.forEach(t => {
+                    badgesHTML += `<span class="bg-zinc-900 border border-zinc-700 text-zinc-400 px-2 py-0.5 rounded text-[10px]">${t}</span>`;
+                });
+            }
+            badgesContainer.innerHTML = badgesHTML;
+
+            // Sauces list
+            const saucesContainer = document.getElementById('modalSauces');
+            saucesContainer.innerHTML = spot.sauces.map(sauce => `
+                <div class="flex items-center gap-2 bg-zinc-900/60 p-2 rounded-lg border border-zinc-800 text-zinc-200">
+                    <i class="fa-solid fa-bottle-droplet text-mustard-400"></i>
+                    <span>${sauce}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('detailModal').classList.remove('hidden');
+            document.getElementById('detailModal').classList.add('flex');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            document.getElementById('detailModal').classList.remove('flex');
+        }
+
+        // Roulette / Pancho Match Modal
+        function openRoulette() {
+            document.getElementById('rouletteModal').classList.remove('hidden');
+            document.getElementById('rouletteModal').classList.add('flex');
+            document.getElementById('rouletteBox').innerHTML = `<span class="text-zinc-400 text-xs italic">Presioná el botón abajo para girar la ruleta...</span>`;
+        }
+
+        function closeRouletteModal() {
+            document.getElementById('rouletteModal').classList.add('hidden');
+            document.getElementById('rouletteModal').classList.remove('flex');
+        }
+
+        function spinRoulette() {
+            const btn = document.getElementById('spinBtn');
+            const box = document.getElementById('rouletteBox');
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            let counter = 0;
+            const interval = setInterval(() => {
+                const randomTemp = spots[Math.floor(Math.random() * spots.length)];
+                box.innerHTML = `
+                    <span class="text-mustard-400 font-extrabold text-sm animate-pulse">${randomTemp.name}</span>
+                    <span class="text-zinc-500 text-[10px]">${randomTemp.partido}</span>
+                `;
+                counter++;
+                if (counter > 15) {
+                    clearInterval(interval);
+                    const chosen = spots[Math.floor(Math.random() * spots.length)];
+                    box.innerHTML = `
+                        <div class="text-center animate-bounce">
+                            <span class="text-xs text-ketchup-500 font-bold uppercase tracking-wider block">¡TU PANCHO ELEGIDO ES!</span>
+                            <h3 class="text-base font-black text-white mt-1">${chosen.name}</h3>
+                            <p class="text-xs text-zinc-400">${chosen.address} (${chosen.partido})</p>
+                            <p class="text-xs text-mustard-400 font-bold mt-1">$${chosen.price.toLocaleString('es-AR')}</p>
+                            <button onclick="closeRouletteModal(); openDetailModal('${chosen.id}');" class="mt-3 px-3 py-1 bg-mustard-500 text-zinc-950 font-bold text-xs rounded-lg shadow hover:bg-mustard-400">
+                                Ver Detalles del Puesto
+                            </button>
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50');
+                }
+            }, 100);
+        }
+
+        // Add Custom Spot Modal
+        function openAddModal() {
+            document.getElementById('addModal').classList.remove('hidden');
+            document.getElementById('addModal').classList.add('flex');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+            document.getElementById('addModal').classList.remove('flex');
+        }
+
+        function saveCustomSpot(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('addName').value;
+            const partido = document.getElementById('addPartido').value;
+            const price = parseFloat(document.getElementById('addPrice').value) || 3000;
+            const address = document.getElementById('addAddress').value;
+            const rawSauces = document.getElementById('addSauces').value;
+            const rating = parseFloat(document.getElementById('addRating').value) || 4.5;
+            const is24hs = document.getElementById('addIs24').value === 'true';
+            const description = document.getElementById('addDescription').value;
+
+            // Generate approximate lat/lng near zone center for demo map placement
+            const partidoCoords = {
+                'Tigre': [-34.4251, -58.5796],
+                'San Fernando': [-34.4442, -58.5578],
+                'San Isidro': [-34.4712, -58.5284],
+                'Vicente López': [-34.5265, -58.4791],
+                'San Martín': [-34.5775, -58.5369],
+                'Malvinas Argentinas': [-34.5021, -58.6983],
+                'Escobar': [-34.3481, -58.7901]
+            };
+
+            const baseCoord = partidoCoords[partido] || [-34.4500, -58.5500];
+            // slight random offset so new markers don't overlap completely
+            const lat = baseCoord[0] + (Math.random() - 0.5) * 0.02;
+            const lng = baseCoord[1] + (Math.random() - 0.5) * 0.02;
+
+            const saucesList = rawSauces ? rawSauces.split(',').map(s => s.trim()) : ['Lluvia de Papas', 'Mayonesa', 'Ketchup', 'Salsa Criolla'];
+
+            const newSpot = {
+                id: 'spot-user-' + Date.now(),
+                name,
+                partido,
+                address,
+                zone: partido,
+                lat,
+                lng,
+                price,
+                rating,
+                is24hs,
+                type: 'Puesto de la Comunidad',
+                tags: ['Comunidad', is24hs ? '24hs' : 'Local'],
+                sauces: saucesList,
+                image: 'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?auto=format&fit=crop&w=600&q=80',
+                description: description || 'Recomendado por un vecino de la comunidad de Zona Norte.'
+            };
+
+            spots.unshift(newSpot);
+            localStorage.setItem('panchos_zonanorte_data', JSON.stringify(spots));
+
+            closeAddModal();
+            document.getElementById('addSpotForm').reset();
+            applyFilters();
+            showToast('¡Gracias! Tu panchería fue agregada con éxito.');
+        }
+
+        // Toast Helper
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
