@@ -13,44 +13,38 @@
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        #map { height: 420px; z-index: 10; }
+        #map { height: 400px; z-index: 10; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-amber-50 text-slate-800 font-sans min-h-screen flex flex-col">
 
-    <!-- Header -->
+    <!-- Header Original y Limpio -->
     <header class="bg-red-600 text-white shadow-lg sticky top-0 z-30">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <div class="bg-yellow-400 text-red-700 p-3 rounded-full text-2xl shadow">
                     <i class="fa-solid fa-hotdog"></i>
                 </div>
                 <div>
                     <h1 class="text-2xl font-black tracking-wider uppercase">Panchos Zona Norte</h1>
-                    <p class="text-xs text-amber-100">El mapa colaborativo interactivo de súper panchos</p>
+                    <p class="text-xs text-amber-100">El mapa definitivo de los mejores súper panchos de GBA Norte</p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
                 <button onclick="getUserLocation()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3.5 py-2 rounded-xl shadow transition flex items-center gap-2 cursor-pointer text-xs w-full sm:w-auto justify-center">
-                    <i class="fa-solid fa-location-crosshairs"></i> ¿Cuál me queda más cerca?
+                    <i class="fa-solid fa-location-crosshairs"></i> ¿Cuál está más cerca?
                 </button>
-                <button onclick="openRoulette()" class="bg-yellow-400 hover:bg-yellow-300 text-red-900 font-bold px-3.5 py-2 rounded-xl shadow transition flex items-center gap-2 cursor-pointer text-xs w-full sm:w-auto justify-center">
-                    <i class="fa-solid fa-dice"></i> Ruleta
+                <button onclick="openRoulette()" class="bg-yellow-400 hover:bg-yellow-300 text-red-900 font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-2 cursor-pointer text-sm w-full md:w-auto justify-center">
+                    <i class="fa-solid fa-dice"></i> Ruleta Panchera
                 </button>
-                <button onclick="openModal('addSpotModal')" class="bg-white hover:bg-amber-100 text-red-600 font-bold px-3.5 py-2 rounded-xl shadow transition flex items-center gap-2 cursor-pointer text-xs w-full sm:w-auto justify-center">
-                    <i class="fa-solid fa-plus-circle"></i> Agregar
+                <button onclick="openModal('addSpotModal')" class="bg-white hover:bg-amber-100 text-red-600 font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-2 cursor-pointer text-sm w-full md:w-auto justify-center">
+                    <i class="fa-solid fa-plus-circle"></i> Agregar Puesto
                 </button>
             </div>
         </div>
     </header>
-
-    <!-- Banner Clima Interactivo -->
-    <div id="weatherBanner" class="bg-amber-100 border-b border-amber-200 py-2 px-4 text-center text-xs font-semibold text-amber-900 flex items-center justify-center gap-2">
-        <i class="fa-solid fa-cloud-sun text-amber-600 animate-pulse"></i>
-        <span id="weatherText">Consultando el clima de Zona Norte...</span>
-    </div>
 
     <!-- Main Content -->
     <main class="max-w-6xl mx-auto px-4 py-6 flex-grow grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
@@ -132,19 +126,19 @@
         </div>
     </div>
 
-    <!-- Modal Add Spot (Con Geocodificador de dirección) -->
+    <!-- Modal Add Spot -->
     <div id="addSpotModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
             <button onclick="closeModal('addSpotModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold">
                 <i class="fa-solid fa-xmark"></i>
             </button>
             <h3 class="text-lg font-bold text-red-600 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-circle-plus"></i> Agregar Nuevo Puesto
+                <i class="fa-solid fa-circle-plus"></i> Sugerir Nuevo Puesto
             </h3>
             <form id="addSpotForm" onsubmit="handleNewSpot(event)" class="flex flex-col gap-3">
                 <div>
                     <label class="text-xs font-semibold text-slate-600">Nombre del Local</label>
-                    <input type="text" id="newName" required placeholder="Ej: Panchería El Cañon" class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+                    <input type="text" id="newName" required placeholder="Ej: Panchos 46" class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -168,15 +162,15 @@
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-semibold text-slate-600">Dirección Completa (se buscará en el mapa)</label>
-                    <input type="text" id="newAddress" required placeholder="Ej: Av. Cazón 1200, Tigre" class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+                    <label class="text-xs font-semibold text-slate-600">Dirección y Esquina</label>
+                    <input type="text" id="newAddress" required placeholder="Ej: Av. Constituyentes 810" class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-sm">
                 </div>
                 <div>
                     <label class="text-xs font-semibold text-slate-600">Aderezos Especiales (separados por coma)</label>
                     <input type="text" id="newToppings" placeholder="Mayonesa de ajo, Salsa golf, Cheddar..." class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-sm">
                 </div>
                 <button type="submit" id="submitBtn" class="mt-3 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-xl shadow transition cursor-pointer flex justify-center items-center gap-2">
-                    Ubicar en Mapa y Guardar
+                    Guardar para Todos
                 </button>
             </form>
         </div>
@@ -215,7 +209,6 @@
         async function initApp() {
             initMap();
             await fetchSpots();
-            fetchWeather();
         }
 
         function initMap() {
@@ -225,27 +218,7 @@
             }).addTo(map);
         }
 
-        // API 1: Clima en vivo (OpenMeteo)
-        async function fetchWeather() {
-            try {
-                // Coordenadas aproximadas de Tigre / Zona Norte
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-34.426&longitude=-58.579&current_weather=true');
-                const data = await res.json();
-                const temp = Math.round(data.current_weather.temperature);
-                
-                let message = `Clima en Zona Norte: ${temp}°C. `;
-                if (temp < 18) {
-                    message += "¡Ideal para clavarte un súper pancho calentito con salsa de ajo! 🌭🔥";
-                } else {
-                    message += "¡Día clave para comer al paso con una buena gaseosa helada! 🥤🌭";
-                }
-                document.getElementById('weatherText').innerText = message;
-            } catch(e) {
-                document.getElementById('weatherText').innerText = "¡Cualquier momento es bueno para un súper pancho en Zona Norte! 🌭";
-            }
-        }
-
-        // API 2: Cargar datos desde Supabase
+        // Cargar datos desde Supabase en tiempo real
         async function fetchSpots() {
             const { data, error } = await supabaseClient
                 .from('panchos')
@@ -262,19 +235,16 @@
             renderSpots(spots);
         }
 
-        // API 3: Geolocalización ("¿Cuál me queda más cerca?")
+        // Geolocalización ("¿Cuál está más cerca?")
         function getUserLocation() {
             if (!navigator.geolocation) {
                 alert("Tu navegador no soporta geolocalización.");
                 return;
             }
 
-            document.getElementById('weatherText').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Buscando tu ubicación GPS...';
-
             navigator.geolocation.getCurrentPosition(pos => {
                 userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                 
-                // Marcador de la posición del usuario
                 L.marker([userPos.lat, userPos.lng], {
                     icon: L.divIcon({
                         className: 'user-marker',
@@ -284,22 +254,17 @@
 
                 map.setView([userPos.lat, userPos.lng], 13);
 
-                // Calcular distancia a cada puesto
                 spots.forEach(s => {
                     s.distance = calculateDistance(userPos.lat, userPos.lng, s.lat, s.lng);
                 });
 
-                // Ordenar por cercanía
                 spots.sort((a, b) => a.distance - b.distance);
                 renderSpots(spots);
-
-                document.getElementById('weatherText').innerText = `¡Ubicación encontrada! Mostrando los puestos más cercanos a vos primero.`;
             }, () => {
-                alert("No se pudo obtener tu ubicación. Asegurate de habilitar los permisos de GPS.");
+                alert("No se pudo obtener tu ubicación. Habilitá los permisos de GPS.");
             });
         }
 
-        // Fórmula Haversine para distancia en KM
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -403,6 +368,7 @@
         }
 
         function openModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden'); // por si acaso
             document.getElementById(modalId).classList.remove('hidden');
         }
 
@@ -427,11 +393,11 @@
             }, 800);
         }
 
-        // API 4: Geocodificación Nominatim para transformar Dirección -> Coordenadas
+        // Guardar con autocompletado de dirección por API OpenStreetMap
         async function handleNewSpot(event) {
             event.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando ubicación...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando y guardando...';
             btn.disabled = true;
 
             const addressInput = document.getElementById('newAddress').value;
@@ -441,7 +407,6 @@
             let lat = -34.49, lng = -58.58;
 
             try {
-                // Búsqueda de coordenadas con OpenStreetMap Geocoder
                 const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullSearch)}`);
                 const geoData = await geoRes.json();
                 if (geoData && geoData.length > 0) {
@@ -449,10 +414,8 @@
                     lng = parseFloat(geoData[0].lon);
                 }
             } catch(e) {
-                console.log("No se pudo autodetectar coordenadas, usando posición por defecto.");
+                console.log("Usando coordenadas por defecto.");
             }
-
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
 
             const newSpot = {
                 name: document.getElementById('newName').value,
@@ -470,7 +433,7 @@
                 .from('panchos')
                 .insert([newSpot]);
 
-            btn.innerHTML = 'Ubicar en Mapa y Guardar';
+            btn.innerHTML = 'Guardar para Todos';
             btn.disabled = false;
 
             if (error) {
@@ -478,7 +441,7 @@
                 return;
             }
 
-            alert('¡Puesto ubicado y guardado con éxito!');
+            alert('¡Puesto guardado con éxito!');
             closeModal('addSpotModal');
             document.getElementById('addSpotForm').reset();
             
