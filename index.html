@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="<UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Los Mejores Panchos de Zona Norte (Bs As)</title>
     <!-- Tailwind CSS -->
@@ -385,6 +385,40 @@
         // Initial Seed Data: Iconic Super Pancho Spots in Zona Norte
         const INITIAL_SPOTS = [
             {
+                id: 'spot-viejojuan',
+                name: 'El Viejo Juan',
+                partido: 'Tigre',
+                address: 'Av. Hipólito Yrigoyen 746 (Ruta 197)',
+                zone: 'General Pacheco / Tigre',
+                lat: -34.4608,
+                lng: -58.6293,
+                price: 3600,
+                rating: 4.9,
+                is24hs: false,
+                type: 'Panchería Emblemática',
+                tags: ['Panchería Emblemática', 'Lluvia XL', 'Aderezos Caseros'],
+                sauces: ['Salsa de Ajo de la Casa', 'Cheddar Caliente Especial', 'Lluvia de Papas Extra Crujiente', 'Salsa Criolla Tradicional', 'Golf Artesanal'],
+                image: 'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?auto=format&fit=crop&w=600&q=80',
+                description: '¡Una institución absoluta de Zona Norte! "El Viejo Juan" es un templo para los amantes del súper pancho. Famosos por su salchicha de primera calidad, abundante lluvia de papas y sus legendarios aderezos artesanales.'
+            },
+            {
+                id: 'spot-estacion-dontorcuato',
+                name: 'Kiosco Panchería Estación Don Torcuato',
+                partido: 'Tigre',
+                address: 'Av. del Trabajo & Estación Don Torcuato (Tren Belgrano Norte)',
+                zone: 'Don Torcuato / Tigre',
+                lat: -34.4985,
+                lng: -58.6189,
+                price: 2800,
+                rating: 4.8,
+                is24hs: true,
+                type: 'Kiosco / Puesto de Estación',
+                tags: ['24hs', 'Kiosco de Estación', 'Económico', 'Clásico del Pasajero'],
+                sauces: ['Lluvia de Papas Abundante', 'Mayonesa Casera de Ajo', 'Salsa de Queso', 'Ketchup Ahumado', 'Picante Especial'],
+                image: 'https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?auto=format&fit=crop&w=600&q=80',
+                description: 'El clásico e imbatible punto de bajón pegado a la Estación de Don Torcuato. Salchichas gigantes al vapor a toda hora, ideal para el pasajero que va o vuelve en el tren Belgrano Norte.'
+            },
+            {
                 id: 'spot-1',
                 name: 'El Rey del Pancho',
                 partido: 'San Fernando',
@@ -513,7 +547,7 @@
         let currentSelectedSpot = null;
 
         // Categories available for filtering
-        const TAG_OPTIONS = ['24hs', 'Puesto Callejero', 'Local Clásico', 'Lluvia XL', 'Económico'];
+        const TAG_OPTIONS = ['24hs', 'Puesto Callejero', 'Local Clásico', 'Panchería Emblemática', 'Kiosco de Estación', 'Lluvia XL', 'Económico'];
 
         // Initialize App
         window.addEventListener('DOMContentLoaded', () => {
