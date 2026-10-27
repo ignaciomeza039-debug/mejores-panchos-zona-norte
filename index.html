@@ -3,452 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Los Mejores Panchos de Zona Norte (Bs.As.)</title>
+    <title>Los Mejores Panchos de Zona Norte</title>
+    
     <!-- Tailwind CSS -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- Supabase JS Client -->
+    
+    <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Google Fonts / Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        #map { height: 400px; z-index: 10; }
+        body { font-family: 'Inter', sans-serif; }
+        #map { height: 100vh; width: 100%; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     </style>
 </head>
-<body class="bg-amber-50 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="bg-gray-50 flex flex-col h-screen overflow-hidden">
 
-    <!-- Header Original y Limpio -->
-    <header class="bg-red-600 text-white shadow-lg sticky top-0 z-30">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="bg-yellow-400 text-red-700 p-3 rounded-full text-2xl shadow">
-                    <i class="fa-solid fa-hotdog"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-black tracking-wider uppercase">Panchos Zona Norte</h1>
-                    <p class="text-xs text-amber-100">El mapa definitivo de los mejores súper panchos de GBA Norte</p>
-                </div>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                <button onclick="getUserLocation()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3.5 py-2 rounded-xl shadow transition flex items-center gap-2 cursor-pointer text-xs w-full sm:w-auto justify-center">
-                    <i class="fa-solid fa-location-crosshairs"></i> ¿Cuál está más cerca?
-                </button>
-                <button onclick="openRoulette()" class="bg-yellow-400 hover:bg-yellow-300 text-red-900 font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-2 cursor-pointer text-sm w-full md:w-auto justify-center">
-                    <i class="fa-solid fa-dice"></i> Ruleta Panchera
-                </button>
-                <button onclick="openModal('addSpotModal')" class="bg-white hover:bg-amber-100 text-red-600 font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-2 cursor-pointer text-sm w-full md:w-auto justify-center">
-                    <i class="fa-solid fa-plus-circle"></i> Agregar Puesto
-                </button>
-            </div>
+    <!-- Header / Navbar -->
+    <header class="bg-amber-600 text-white shadow-md z-20 flex items-center justify-between px-6 py-3">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl">🌭</span>
+            <h1 class="text-lg font-bold tracking-tight">Panchos Zona Norte</h1>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="abrirRuleta()" class="bg-amber-700 hover:bg-amber-800 text-white text-sm px-4 py-2 rounded-lg font-medium transition shadow-sm flex items-center gap-1.5">
+                🎰 Ruleta Panchera
+            </button>
+            <button onclick="abrirModal()" class="bg-white text-amber-700 hover:bg-amber-50 text-sm px-4 py-2 rounded-lg font-semibold transition shadow-sm">
+                + Agregar Puesto
+            </button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-4 py-6 flex-grow grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
+    <!-- Main Content Container -->
+    <div class="flex flex-col md:flex-row flex-1 overflow-hidden relative">
         
-        <!-- Left Column: Filters & List -->
-        <section class="lg:col-span-1 flex flex-col gap-4">
-            <!-- Search & Filters Card -->
-            <div class="bg-white p-4 rounded-2xl shadow-md border border-amber-200">
-                <div class="relative mb-3">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </span>
-                    <input type="text" id="searchInput" oninput="filterSpots()" placeholder="Buscar por nombre o calle..." 
-                        class="w-full pl-10 pr-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 block mb-1">Partido / Municipio</label>
-                        <select id="partidoFilter" onchange="filterSpots()" class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-red-500">
-                            <option value="">Todos</option>
-                            <option value="Tigre">Tigre</option>
-                            <option value="San Martín">San Martín</option>
-                            <option value="San Isidro">San Isidro</option>
-                            <option value="Vicente López">Vicente López</option>
-                            <option value="San Fernando">San Fernando</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-500 block mb-1">Categoría</label>
-                        <select id="categoryFilter" onchange="filterSpots()" class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-red-500">
-                            <option value="">Todas</option>
-                            <option value="Emblemático">Emblemático</option>
-                            <option value="24hs">Abierto 24hs</option>
-                            <option value="Estación">Estación</option>
-                            <option value="Económico">Económico</option>
-                        </select>
-                    </div>
-                </div>
+        <!-- Sidebar / Lista -->
+        <div class="w-full md:w-96 bg-white border-r border-gray-200 flex flex-col z-10 shadow-lg">
+            <div class="p-4 border-b border-gray-100">
+                <input type="text" id="buscador" placeholder="Buscar por nombre, partido o toppings..." oninput="filtrarPanchos()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
             </div>
-
-            <!-- Spots List -->
-            <div class="bg-white rounded-2xl shadow-md border border-amber-200 overflow-hidden flex flex-col h-[500px]">
-                <div class="p-3 bg-amber-100 border-b border-amber-200 flex justify-between items-center">
-                    <h2 class="font-bold text-sm text-red-800 flex items-center gap-2">
-                        <i class="fa-solid fa-list"></i> Puestos Encontrados
-                    </h2>
-                    <span id="spotCount" class="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">0</span>
-                </div>
-                <div id="spotsList" class="overflow-y-auto custom-scrollbar p-3 flex flex-col gap-3 flex-grow">
-                    <p class="text-center text-xs text-slate-400 py-6"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Cargando puestos...</p>
-                </div>
+            <div id="lista-panchos" class="flex-1 overflow-y-auto custom-scrollbar divide-y divide-gray-100">
+                <!-- Se llena con JS -->
             </div>
-        </section>
+        </div>
 
-        <!-- Right Column: Map -->
-        <section class="lg:col-span-2 flex flex-col gap-4">
-            <div class="bg-white p-4 rounded-2xl shadow-md border border-amber-200 flex flex-col h-full">
-                <h2 class="font-bold text-sm text-red-800 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-map-location-dot"></i> Mapa Panchero de Zona Norte
-                </h2>
-                <div id="map" class="rounded-xl shadow-inner border border-amber-100 flex-grow"></div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-slate-900 text-white py-4 mt-auto text-center text-xs">
-        <p>Hecho con pasión panchera en Zona Norte 🌭 &copy; 2026</p>
-    </footer>
-
-    <!-- Modal Detail View -->
-    <div id="detailModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-            <button onclick="closeModal('detailModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div id="modalContent"></div>
+        <!-- Mapa -->
+        <div class="flex-1 h-full relative">
+            <div id="map"></div>
         </div>
     </div>
 
-    <!-- Modal Add Spot -->
-    <div id="addSpotModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-            <button onclick="closeModal('addSpotModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <h3 class="text-lg font-bold text-red-600 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-circle-plus"></i> Sugerir Nuevo Puesto
-            </h3>
-            <form id="addSpotForm" onsubmit="handleNewSpot(event)" class="flex flex-col gap-3">
+    <!-- Modal Agregar Puesto -->
+    <div id="modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Agregar nuevo puesto de panchos</h2>
+            <form id="form-pancho" onsubmit="guardarPancho(event)" class="space-y-3">
                 <div>
-                    <label class="text-xs font-semibold text-slate-600">Nombre del Local</label>
-                    <input type="text" id="newName" required placeholder="Ej: Panchos 46" class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-sm">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600">Partido</label>
-                        <select id="newPartido" class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-sm">
-                            <option value="Tigre">Tigre</option>
-                            <option value="San Martín">San Martín</option>
-                            <option value="San Isidro">San Isidro</option>
-                            <option value="Vicente López">Vicente López</option>
-                            <option value="San Fernando">San Fernando</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600">Categoría</label>
-                        <select id="newCategory" class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-sm">
-                            <option value="Emblemático">Emblemático</option>
-                            <option value="24hs">Abierto 24hs</option>
-                            <option value="Estación">Estación</option>
-                            <option value="Económico">Económico</option>
-                        </select>
-                    </div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nombre del lugar</label>
+                    <input type="text" id="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                 </div>
                 <div>
-                    <label class="text-xs font-semibold text-slate-600">Dirección y Esquina</label>
-                    <input type="text" id="newAddress" required placeholder="Ej: Av. Constituyentes 810" class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Partido</label>
+                    <select id="partido" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="Tigre">Tigre</option>
+                        <option value="San Fernando">San Fernando</option>
+                        <option value="Vicente López">Vicente López</option>
+                        <option value="San Isidro">San Isidro</option>
+                        <option value="San Martín">San Martín</option>
+                        <option value="Malvinas Argentinas">Malvinas Argentinas</option>
+                    </select>
                 </div>
                 <div>
-                    <label class="text-xs font-semibold text-slate-600">Aderezos Especiales (separados por coma)</label>
-                    <input type="text" id="newToppings" placeholder="Mayonesa de ajo, Salsa golf, Cheddar..." class="w-full p-2 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Categoría</label>
+                    <select id="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="Emblemático">Emblemático</option>
+                        <option value="Carrito">Carrito</option>
+                        <option value="Estación">Estación</option>
+                        <option value="24hs">24hs</option>
+                    </select>
                 </div>
-                <button type="submit" id="submitBtn" class="mt-3 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-xl shadow transition cursor-pointer flex justify-center items-center gap-2">
-                    Guardar para Todos
-                </button>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Dirección completa</label>
+                    <input type="text" id="address" placeholder="Ej: Av. Cazón 1200, Tigre" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Toppings / Aderezos</label>
+                    <input type="text" id="toppings" placeholder="Ej: Lluvia de papas, cheddar, salsa criolla" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Descripción / Reseña</label>
+                    <textarea id="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="cerrarModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-sm">Guardar</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Ruleta / Randomizer -->
-    <div id="rouletteModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center relative">
-            <button onclick="closeModal('rouletteModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div class="text-3xl text-red-600 mb-2"><i class="fa-solid fa-dice"></i></div>
-            <h3 class="text-lg font-bold text-slate-800 mb-1">Ruleta Panchera</h3>
-            <p class="text-xs text-slate-500 mb-4">¿No sabés dónde parar a comer? Dejanos elegir por vos:</p>
-            <div id="rouletteResult" class="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-4 text-sm font-semibold text-red-700 min-h-[80px] flex items-center justify-center">
-                ¡Girá la ruleta para decidir tu almuerzo!
+    <!-- Modal Ruleta Panchera -->
+    <div id="modal-ruleta" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center relative">
+            <div class="text-4xl mb-2">🎰</div>
+            <h2 class="text-xl font-bold text-gray-800 mb-1">Ruleta Panchera</h2>
+            <p class="text-xs text-gray-500 mb-4">¿Indeciso? Dejמש que el destino elija dónde comés hoy.</p>
+            <div id="resultado-ruleta" class="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-4 text-amber-900 font-semibold text-sm">
+                ¡Girá la ruleta para elegir!
             </div>
-            <button onclick="spinRoulette()" class="bg-yellow-400 hover:bg-yellow-300 text-red-900 font-bold px-6 py-2 rounded-xl shadow transition cursor-pointer w-full">
-                ¡Girar Ruleta! 🎲
-            </button>
+            <div class="flex space-x-2">
+                <button onclick="girarRuleta()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-sm py-2.5 rounded-lg font-semibold shadow-sm transition">¡Girar!</button>
+                <button onclick="cerrarRuleta()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">Cerrar</button>
+            </div>
         </div>
     </div>
 
-    <!-- Leaflet JS & Script Principal -->
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script>
-        // CONFIGURACIÓN DE SUPABASE INTEGRADA
-        const SUPABASE_URL = "https://tBBCEvpUFRKn2Bz4GS_DfA_UZT26WpU.supabase.co";
-        const SUPABASE_KEY = "sb_secret_uIUvJjvjjq34_1qUC1WVLQ_w5uSZfk1";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // CONFIGURACIÓN DE SUPABASE (Tus credenciales públicas)
+        const SUPABASE_URL = 'https://tu-proyecto.supabase.co'; // Reemplaza con tu URL si es necesario o déjalo configurado en Vercel
+        const SUPABASE_ANON_KEY = 'tu-anon-key';
+        
+        // Inicializar cliente (si usas variables de entorno o inyección de Vercel)
+        const supabaseClient = window.supabase.createClient(
+            window.SUPABASE_URL || SUPABASE_URL, 
+            window.SUPABASE_ANON_KEY || SUPABASE_ANON_KEY
+        );
 
-        let spots = [];
-        let map, markers = [];
-        let userPos = null;
+        let map = L.map('map').setView([-34.4500, -58.5800], 12);
+        let markersLayer = L.layerGroup().addTo(map);
+        let listaPanchosGlobal = [];
 
-        async function initApp() {
-            initMap();
-            await fetchSpots();
-        }
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
-        function initMap() {
-            map = L.map('map').setView([-34.49, -58.58], 12);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-        }
-
-        // Cargar datos desde Supabase en tiempo real
-        async function fetchSpots() {
-            const { data, error } = await supabaseClient
-                .from('panchos')
-                .select('*')
-                .order('id', { ascending: false });
-
+        async function cargarPanchos() {
+            const { data, error } = await supabaseClient.from('panchos').select('*');
             if (error) {
-                console.error("Error al cargar datos:", error);
-                document.getElementById('spotsList').innerHTML = `<p class="text-center text-xs text-red-500 py-6">Error al cargar puestos de la base de datos.</p>`;
+                console.error('Error al cargar panchos:', error);
+                return;
+            }
+            listaPanchosGlobal = data || [];
+            renderizarPanchos(listaPanchosGlobal);
+        }
+
+        function renderizarPanchos(panchos) {
+            const contenedor = document.getElementById('lista-panchos');
+            contenedor.innerHTML = '';
+            markersLayer.clearLayers();
+
+            if (panchos.length === 0) {
+                contenedor.innerHTML = '<p class="p-4 text-sm text-gray-500 text-center">No se encontraron puestos.</p>';
                 return;
             }
 
-            spots = data || [];
-            renderSpots(spots);
-        }
-
-        // Geolocalización ("¿Cuál está más cerca?")
-        function getUserLocation() {
-            if (!navigator.geolocation) {
-                alert("Tu navegador no soporta geolocalización.");
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition(pos => {
-                userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                
-                L.marker([userPos.lat, userPos.lng], {
-                    icon: L.divIcon({
-                        className: 'user-marker',
-                        html: '<div style="background-color:#10b981; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.5);"></div>'
-                    })
-                }).addTo(map).bindPopup("<b>¡Estás acá!</b>").openPopup();
-
-                map.setView([userPos.lat, userPos.lng], 13);
-
-                spots.forEach(s => {
-                    s.distance = calculateDistance(userPos.lat, userPos.lng, s.lat, s.lng);
-                });
-
-                spots.sort((a, b) => a.distance - b.distance);
-                renderSpots(spots);
-            }, () => {
-                alert("No se pudo obtener tu ubicación. Habilitá los permisos de GPS.");
-            });
-        }
-
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-
-        function renderSpots(data) {
-            const listContainer = document.getElementById('spotsList');
-            listContainer.innerHTML = '';
-            document.getElementById('spotCount').innerText = data.length;
-
-            markers.forEach(m => map.removeLayer(m));
-            markers = [];
-
-            if(data.length === 0) {
-                listContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">No hay puestos registrados aún o ninguno coincide con los filtros.</p>`;
-                return;
-            }
-
-            data.forEach(spot => {
-                const distanceBadge = spot.distance !== undefined ? 
-                    `<span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md"><i class="fa-solid fa-person-walking mr-1"></i>${spot.distance.toFixed(1)} km</span>` : '';
-
-                const card = document.createElement('div');
-                card.className = "bg-amber-50/60 hover:bg-amber-100/80 border border-amber-200 rounded-xl p-3 cursor-pointer transition flex flex-col gap-1";
-                card.onclick = () => focusSpot(spot.lat, spot.lng, spot.id);
-                card.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-bold text-sm text-slate-800">${spot.name}</h3>
-                        <span class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full">${spot.category}</span>
+            panchos.forEach(p => {
+                // Renderizar en lista lateral
+                const item = document.createElement('div');
+                item.className = 'p-4 hover:bg-gray-50 cursor-pointer transition';
+                item.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <h3 class="font-bold text-gray-800 text-sm">${p.name}</h3>
+                        <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">${p.category}</span>
                     </div>
-                    <p class="text-xs text-slate-500"><i class="fa-solid fa-location-dot text-red-500 mr-1"></i> ${spot.address} (${spot.partido})</p>
-                    <div class="flex justify-between items-center mt-1">
-                        <span class="text-xs font-bold text-amber-700">★ ${spot.rating || '5.0'}</span>
-                        <div class="flex items-center gap-2">
-                            ${distanceBadge}
-                            <button onclick="event.stopPropagation(); openDetail(${spot.id})" class="text-xs bg-red-600 text-white px-2.5 py-1 rounded-lg hover:bg-red-700 transition">Ver detalle</button>
-                        </div>
-                    </div>
+                    <p class="text-xs text-gray-500 mb-1">📍 ${p.address} (${p.partido})</p>
+                    <p class="text-xs text-gray-600 italic">🌭 ${p.toppings || 'Sin aderezos especificados'}</p>
                 `;
-                listContainer.appendChild(card);
+                item.onclick = () => {
+                    map.setView([p.lat, p.lng], 15);
+                };
+                contenedor.appendChild(item);
 
-                const marker = L.marker([spot.lat, spot.lng]).addTo(map);
-                marker.bindPopup(`<b>${spot.name}</b><br>${spot.address}<br><a href="https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}" target="_blank" class="text-red-600 font-bold text-xs underline">Cómo llegar</a>`);
-                markers.push(marker);
-            });
-        }
-
-        function filterSpots() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const partido = document.getElementById('partidoFilter').value;
-            const category = document.getElementById('categoryFilter').value;
-
-            const filtered = spots.filter(s => {
-                const matchesQuery = s.name.toLowerCase().includes(query) || s.address.toLowerCase().includes(query);
-                const matchesPartido = partido === "" || s.partido === partido;
-                const matchesCategory = category === "" || s.category === category;
-                return matchesQuery && matchesPartido && matchesCategory;
-            });
-
-            renderSpots(filtered);
-        }
-
-        function focusSpot(lat, lng, id) {
-            map.setView([lat, lng], 15, { animate: true });
-            openDetail(id);
-        }
-
-        function openDetail(id) {
-            const spot = spots.find(s => s.id === id);
-            if(!spot) return;
-
-            const modalContent = document.getElementById('modalContent');
-            modalContent.innerHTML = `
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-lg font-black text-slate-800">${spot.name}</h3>
-                    <span class="bg-red-100 text-red-700 text-xs font-bold px-2.5 py-1 rounded-full">${spot.category}</span>
-                </div>
-                <p class="text-xs text-slate-500 mb-3"><i class="fa-solid fa-location-dot text-red-500 mr-1"></i> ${spot.address}, ${spot.partido}</p>
-                
-                <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl mb-3 text-xs">
-                    <p class="font-bold text-slate-700 mb-1"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Aderezos y Salsas:</p>
-                    <p class="text-slate-600">${spot.toppings || 'Aderezos clásicos disponibles'}</p>
-                </div>
-
-                <p class="text-xs text-slate-600 mb-4">${spot.description || 'Excelente puesto de panchos en la zona.'}</p>
-
-                <div class="flex gap-2">
-                    <a href="https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}" target="_blank" 
-                       class="flex-grow bg-red-600 hover:bg-red-700 text-white text-center font-bold py-2.5 rounded-xl text-xs shadow transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-diamond-turn-right"></i> Cómo llegar en Google Maps
-                    </a>
-                </div>
-            `;
-            openModal('detailModal');
-        }
-
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden'); // por si acaso
-            document.getElementById(modalId).classList.remove('hidden');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        }
-
-        function openRoulette() {
-            openModal('rouletteModal');
-        }
-
-        function spinRoulette() {
-            const resBox = document.getElementById('rouletteResult');
-            if (spots.length === 0) {
-                resBox.innerHTML = 'No hay puestos cargados en la base de datos todavía.';
-                return;
-            }
-            resBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xl text-red-600"></i>';
-            setTimeout(() => {
-                const randomSpot = spots[Math.floor(Math.random() * spots.length)];
-                resBox.innerHTML = `🎉 ¡Te tocó ir a <b>${randomSpot.name}</b> (${randomSpot.address})!`;
-            }, 800);
-        }
-
-        // Guardar con autocompletado de dirección por API OpenStreetMap
-        async function handleNewSpot(event) {
-            event.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando y guardando...';
-            btn.disabled = true;
-
-            const addressInput = document.getElementById('newAddress').value;
-            const partidoInput = document.getElementById('newPartido').value;
-            const fullSearch = `${addressInput}, ${partidoInput}, Buenos Aires, Argentina`;
-
-            let lat = -34.49, lng = -58.58;
-
-            try {
-                const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullSearch)}`);
-                const geoData = await geoRes.json();
-                if (geoData && geoData.length > 0) {
-                    lat = parseFloat(geoData[0].lat);
-                    lng = parseFloat(geoData[0].lon);
+                // Renderizar en mapa
+                if (p.lat && p.lng) {
+                    const marker = L.marker([p.lat, p.lng]).addTo(markersLayer);
+                    marker.bindPopup(`<b>${p.name}</b><br>${p.address}<br><i>${p.toppings || ''}</i>`);
                 }
-            } catch(e) {
-                console.log("Usando coordenadas por defecto.");
-            }
-
-            const newSpot = {
-                name: document.getElementById('newName').value,
-                partido: partidoInput,
-                category: document.getElementById('newCategory').value,
-                address: addressInput,
-                rating: 5.0,
-                toppings: document.getElementById('newToppings').value || 'Aderezos tradicionales',
-                lat: lat,
-                lng: lng,
-                description: "Puesto sumado colaborativamente a la comunidad de Zona Norte."
-            };
-
-            const { data, error } = await supabaseClient
-                .from('panchos')
-                .insert([newSpot]);
-
-            btn.innerHTML = 'Guardar para Todos';
-            btn.disabled = false;
-
-            if (error) {
-                alert('Error al guardar el puesto: ' + error.message);
-                return;
-            }
-
-            alert('¡Puesto guardado con éxito!');
-            closeModal('addSpotModal');
-            document.getElementById('addSpotForm').reset();
-            
-            await fetchSpots();
+            });
         }
 
-        window.onload = initApp;
+        function filtrarPanchos() {
+            const query = document.getElementById('buscador').value.toLowerCase();
+            const filtrados = listaPanchosGlobal.filter(p => 
+                p.name.toLowerCase().includes(query) || 
+                p.partido.toLowerCase().includes(query) || 
+                (p.toppings && p.toppings.toLowerCase().includes(query))
+            );
+            renderizarPanchos(filtrados);
+        }
+
+        async function guardarPancho(e) {
+            e.preventDefault();
+            const name = document.getElementById('nombre').value;
+            const partido = document.getElementById('partido').value;
+            const category = document.getElementById('category').value;
+            const address = document.getElementById('address').value;
+            const toppings = document.getElementById('toppings').value;
+            const description = document.getElementById('description').value;
+
+            // Geocodificar dirección con Nominatim
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ', ' + partido + ', Buenos Aires, Argentina')}`);
+                const results = await response.json();
+
+                let lat = -34.4500;
+                let lng = -58.5800;
+
+                if (results && results.length > 0) {
+                    lat = parseFloat(results[0].lat);
+                    lng = parseFloat(results[0].lon);
+                }
+
+                const { error } = await supabaseClient.from('panchos').insert([{
+                    name, partido, category, address, toppings, description, lat, lng, rating: 5.0
+                }]);
+
+                if (error) throw error;
+
+                cerrarModal();
+                document.getElementById('form-pancho').reset();
+                cargarPanchos();
+            } catch (err) {
+                console.error('Error al guardar:', err);
+                alert('Hubo un error al guardar el puesto.');
+            }
+        }
+
+        function abrirModal() { document.getElementById('modal').classList.remove('hidden'); }
+        function cerrarModal() { document.getElementById('modal').classList.add('hidden'); }
+        function abrirRuleta() { document.getElementById('modal-ruleta').classList.remove('hidden'); }
+        function cerrarRuleta() { document.getElementById('modal-ruleta').classList.add('hidden'); }
+
+        function girarRuleta() {
+            if (listaPanchosGlobal.length === 0) return;
+            const randomP = listaPanchosGlobal[Math.floor(Math.random() * listaPanchosGlobal.length)];
+            document.getElementById('resultado-ruleta').innerHTML = `🎉 ¡Hoy se come en <b>${randomP.name}</b> (${randomP.partido})!`;
+        }
+
+        // Cargar datos al iniciar
+        cargarPanchos();
     </script>
 </body>
 </html>
