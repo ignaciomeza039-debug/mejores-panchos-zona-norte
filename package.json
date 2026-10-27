@@ -1,0 +1,16 @@
+{
+  "name": "mejores-panchos-zona-norte",
+  "version": "1.0.0",
+  "description": "La guía definitiva del súper pancho en Zona Norte, Buenos Aires",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build needed'",
+    "test": "echo 'No tests configured'"
+  },
+  "keywords": ["panchos", "zona-norte", "buenos-aires"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^1.1.1"
+  }
+}
